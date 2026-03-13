@@ -2,17 +2,46 @@ import { FadeInUp } from "@/components/FadeInUp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { Mail, Phone, MapPin, Send } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { services } from "@/data/siteData";
 
 const Contact = () => {
-  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", service: "", message: "" });
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!form.name.trim() || !form.email.trim() || !form.service || !form.message.trim()) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+
+    setSubmitting(true);
+
+    const { error } = await supabase.from("contact_inquiries").insert({
+      name: form.name.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim() || null,
+      service: form.service,
+      message: form.message.trim(),
+    });
+
+    if (error) {
+      toast.error("Failed to send message. Please try again.");
+      setSubmitting(false);
+      return;
+    }
+
     toast.success("Message sent! We'll get back to you shortly.");
-    setForm({ name: "", email: "", subject: "", message: "" });
+    setForm({ name: "", email: "", phone: "", service: "", message: "" });
+    setSubmitting(false);
   };
 
   return (
@@ -37,24 +66,39 @@ const Contact = () => {
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-deep-slate mb-1.5 block">Name</label>
+                    <label className="text-sm font-medium text-foreground mb-1.5 block">Name *</label>
                     <Input placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-deep-slate mb-1.5 block">Email</label>
+                    <label className="text-sm font-medium text-foreground mb-1.5 block">Email *</label>
                     <Input type="email" placeholder="you@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
                   </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-deep-slate mb-1.5 block">Subject</label>
-                  <Input placeholder="How can we help?" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} required />
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-1.5 block">Mobile Number</label>
+                    <Input type="tel" placeholder="+1 (234) 567-890" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-1.5 block">Service Needed *</label>
+                    <Select value={form.service} onValueChange={(v) => setForm({ ...form, service: v })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a service" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {services.map((s) => (
+                          <SelectItem key={s.slug} value={s.title}>{s.title}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-deep-slate mb-1.5 block">Message</label>
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">Message *</label>
                   <Textarea placeholder="Tell us about your project..." rows={5} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} required />
                 </div>
-                <Button type="submit" variant="hero" size="lg">
-                  <Send className="h-4 w-4 mr-2" /> Send Message
+                <Button type="submit" variant="hero" size="lg" disabled={submitting}>
+                  <Send className="h-4 w-4 mr-2" /> {submitting ? "Sending..." : "Send Message"}
                 </Button>
               </form>
             </FadeInUp>
@@ -63,14 +107,14 @@ const Contact = () => {
             <FadeInUp delay={0.2}>
               <div className="space-y-8">
                 <div>
-                  <h2 className="font-display text-2xl font-bold text-deep-slate mb-6">Contact Information</h2>
+                  <h2 className="font-display text-2xl font-bold text-foreground mb-6">Contact Information</h2>
                   <div className="space-y-5">
                     <div className="flex gap-4">
                       <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                         <Phone className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <div className="font-medium text-deep-slate">Phone</div>
+                        <div className="font-medium text-foreground">Phone</div>
                         <a href="tel:+1234567890" className="text-muted-foreground hover:text-primary transition-colors">+1 (234) 567-890</a>
                       </div>
                     </div>
@@ -79,7 +123,7 @@ const Contact = () => {
                         <Mail className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <div className="font-medium text-deep-slate">Email</div>
+                        <div className="font-medium text-foreground">Email</div>
                         <a href="mailto:info@syntaxitsolution.com" className="text-muted-foreground hover:text-primary transition-colors">info@syntaxitsolution.com</a>
                       </div>
                     </div>
@@ -88,7 +132,7 @@ const Contact = () => {
                         <MapPin className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <div className="font-medium text-deep-slate">Address</div>
+                        <div className="font-medium text-foreground">Address</div>
                         <p className="text-muted-foreground">123 Tech Avenue, Silicon Valley, CA 94025</p>
                       </div>
                     </div>
