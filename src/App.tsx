@@ -34,6 +34,7 @@ const App = () => (
         <Routes>
           {/* Admin routes - no header/footer */}
           <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/setup" element={<AdminSetup />} />
           <Route path="/admin" element={<AdminDashboard />} />
 
           {/* Public routes */}
