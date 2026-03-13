@@ -13,6 +13,7 @@ import Careers from "./pages/Careers";
 import Contact from "./pages/Contact";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminSetup from "./pages/AdminSetup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
